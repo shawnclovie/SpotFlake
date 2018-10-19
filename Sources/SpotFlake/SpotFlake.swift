@@ -8,12 +8,12 @@
 import Foundation
 
 /// Swift version snowflake
-public class SpotFlake {
+public struct SpotFlake {
 	/// The epoch is set to the twitter snowflake epoch of Jan 01 2018 00:00:00 UTC.
 	///
 	/// You may customize this to set a different epoch for your application.
 	///
-	/// By Clock.Time(Date()).flakeTime, you can calculate the epoch.
+	/// By SpotFlake.Time(Date()).flakeTime, you can calculate the epoch.
 	public static var epoch: Int64 = 1514764800000
 	
 	/// Number of bits to use for Node
@@ -56,12 +56,12 @@ public class SpotFlake {
 
 		public func generate() -> Int64 {
 			mu.lock()
-			var now = Clock.calendar.makeTime()?.flakeTime ?? 0
+			var now = SpotFlake.Time.now.flakeTime
 			if time == now {
 				step = (step + 1) & stepMask
 				if step == 0 {
 					while now <= time {
-						now = Clock.calendar.makeTime()?.flakeTime ?? 0
+						now = SpotFlake.Time.now.flakeTime
 					}
 				}
 			} else {

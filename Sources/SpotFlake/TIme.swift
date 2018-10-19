@@ -19,8 +19,8 @@ private typealias CTimeSpec = mach_timespec_t
 
 private let nanoMax: Int32 = 1_000_000_000
 
-public enum Clock {
-	
+extension SpotFlake {
+
 	public struct Time: Equatable {
 		
 		public static func ==(l: Time, r: Time) -> Bool {
@@ -37,15 +37,10 @@ public enum Clock {
 			nanoseconds = Int32(unixNano % Int64(nanoMax))
 		}
 		
-		public init(seconds: Int64, nanoseconds: Int32) {
+		public init(seconds: Int64, nano: Int32) {
 			self.seconds = seconds
-			self.nanoseconds = nanoseconds
+			nanoseconds = nano
 			normalize()
-		}
-		
-		fileprivate init(_ cts: CTimeSpec) {
-			seconds = Int64(cts.tv_sec)
-			nanoseconds = Int32(cts.tv_nsec)
 		}
 		
 		public mutating func normalize() {
@@ -63,32 +58,35 @@ public enum Clock {
 		public var flakeTime: Int64 {
 			return (seconds * Int64(nanoMax) + Int64(nanoseconds)) / 1_000_000
 		}
-	}
-	
-	case calendar
-	case system
-	
-	public func makeTime() -> Time? {
-		var c_timespec = CTimeSpec(tv_sec: 0, tv_nsec: 0)
-		var retval: CInt = -1
-		#if os(Linux)
-		let clockID = self == .calendar ? CLOCK_REALTIME : CLOCK_MONOTONIC
-		retval = clock_gettime(clockID, &c_timespec)
-		#elseif os(OSX) || os(iOS) || os(watchOS) || os(tvOS)
-		var clockName: clock_serv_t = 0
-		let clockID = self == .calendar ? CALENDAR_CLOCK : SYSTEM_CLOCK
-		retval = host_get_clock_service(mach_host_self(), clockID, &clockName)
-		if retval != 0 {
-			return nil
+		
+		public static var now: Time {
+			var c_timespec = CTimeSpec(tv_sec: 0, tv_nsec: 0)
+			var retval: CInt = -1
+			repeat {
+				#if os(Linux)
+				// use CLOCK_MONOTONIC as system clock
+				retval = clock_gettime(CLOCK_REALTIME, &c_timespec)
+				#elseif os(OSX) || os(iOS) || os(watchOS) || os(tvOS)
+				var clockName: clock_serv_t = 0
+				// use SYSTEM_CLOCK as system clock
+				retval = host_get_clock_service(mach_host_self(), CALENDAR_CLOCK, &clockName)
+				guard retval == 0 else {
+					break
+				}
+				retval = clock_get_time(clockName, &c_timespec)
+				_ = mach_port_deallocate(mach_task_self(), clockName)
+				#endif
+				guard retval == 0 else {
+					break
+				}
+				return Time(seconds: Int64(c_timespec.tv_sec), nano: Int32(c_timespec.tv_nsec))
+			} while false
+			return Time(Date())
 		}
-		retval = clock_get_time(clockName, &c_timespec)
-		_ = mach_port_deallocate(mach_task_self(), clockName)
-		#endif
-		return retval == 0 ? Time(c_timespec) : nil
 	}
 }
 
-extension Clock.Time {
+extension SpotFlake.Time {
 	
 	public init(_ date: Date) {
 		let sec = date.timeIntervalSince1970
