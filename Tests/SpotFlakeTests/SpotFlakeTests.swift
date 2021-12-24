@@ -15,11 +15,19 @@ final class SpotFlakeTests: XCTestCase {
     func testGenerate() {
 		let count = 1010
 		let node = SpotFlake.Node(node: 1)!
-		var ids: Set<Int64> = []
+		var ids: Set<SpotFlake.ID> = []
 		for _ in 0..<count {
 			ids.insert(node.generate())
 		}
 		XCTAssert(ids.count == count)
+		
+		let id = SpotFlake.ID(324932740761784320)
+		let b36 = "2gvf1kdqtc00"
+		let b64 = "MzI0OTMyNzQwNzYxNzg0MzIw"
+		XCTAssert(id.base36 == b36)
+		XCTAssert(id.base64 == b64)
+		XCTAssert(id == SpotFlake.ID(base36: b36))
+		XCTAssert(id == SpotFlake.ID(base64: b64))
     }
 	
 	func testClockTime() {
