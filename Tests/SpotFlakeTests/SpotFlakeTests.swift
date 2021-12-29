@@ -7,8 +7,8 @@ final class SpotFlakeTests: XCTestCase {
 		super.setUp()
 		let formatter = DateFormatter()
 		formatter.dateFormat = "yyyy-MM-dd ZZZ"
-		print("epoch of custom date:", SpotFlake.Time(formatter.date(from: "2018-01-01 UTC")!).flakeTime)
-		print("epoch of now:", SpotFlake.Time(Date()).flakeTime)
+		print("epoch of custom date:", SpotFlake.Node.flakeTimestamp(Time(formatter.date(from: "2018-01-01 UTC")!)))
+		print("epoch of now:", SpotFlake.Node.flakeTimestamp(Time(Date())))
 		print("current epoch:", SpotFlake.epoch)
 	}
 	
@@ -29,20 +29,4 @@ final class SpotFlakeTests: XCTestCase {
 		XCTAssert(id == SpotFlake.ID(base36: b36))
 		XCTAssert(id == SpotFlake.ID(base64: b64))
     }
-	
-	func testClockTime() {
-		let timeOver = SpotFlake.Time(seconds: 3, nano: -2_123_456_789)
-		let timeResult = SpotFlake.Time(seconds: 0, nano: 876_543_211)
-		XCTAssert(timeOver == timeResult)
-		
-		let date = Date()
-		let now = SpotFlake.Time(date)
-		let date2 = now.date
-		print(date.timeIntervalSince1970 - date2.timeIntervalSince1970)
-	}
-
-    static var allTests = [
-        ("testGenerate", testGenerate),
-		("testClockTime", testClockTime),
-    ]
 }

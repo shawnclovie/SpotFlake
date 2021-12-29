@@ -49,12 +49,12 @@ public struct SpotFlake {
 
 		public func generate() -> ID {
 			mu.lock()
-			var now = SpotFlake.Time.now.flakeTime
+			var now = Self.flakeTimestamp(.init())
 			if time == now {
 				step = (step + 1) & stepMask
 				if step == 0 {
 					while now <= time {
-						now = SpotFlake.Time.now.flakeTime
+						now = Self.flakeTimestamp(.init())
 					}
 				}
 			} else {
@@ -64,6 +64,10 @@ public struct SpotFlake {
 			let id = ID((now - epoch) << timeShift | (node << stepBits) | step)
 			mu.unlock()
 			return id
+		}
+		
+		static func flakeTimestamp(_ t: Time) -> Int64 {
+			(t.seconds * TimeDuration.nanosecondsPerSecond + Int64(t.nanoseconds)) / TimeDuration.nanosecondsPerMillisecond
 		}
 	}
 	

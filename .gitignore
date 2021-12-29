@@ -38,6 +38,7 @@ playground.xcworkspace
 # Packages/
 # Package.pins
 # Package.resolved
+.vscode
 .DS_Store
 /.build
 /Packages
