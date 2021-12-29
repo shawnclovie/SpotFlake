@@ -1,5 +1,5 @@
 //
-//  SpotFlake.swift
+//  flake.swift
 //  SpotFlake
 //
 //  Created by Shawn Clovie on 18/10/2018.
@@ -21,7 +21,7 @@ let nodeMask: Int64 = nodeMax << stepBits
 let stepMask: Int64 = -1 ^ (-1 << stepBits)
 
 /// Swift version snowflake
-public struct SpotFlake {
+public struct Flake {
 	/// The epoch is set to the twitter snowflake epoch of Jan 01 2018 00:00:00 UTC.
 	///
 	/// You may customize this to set a different epoch for your application.
