@@ -62,6 +62,10 @@ public struct Time {
 		(self.seconds, nanoseconds) = normalized(seconds: seconds, nano: nano)
 		self.zone = zone
 	}
+	
+	public init() {
+		self.init(zone: nil)
+	}
 
 	public init(zone: TimeZone? = nil) {
 		var c_timespec = CTimeSpec(tv_sec: 0, tv_nsec: 0)
