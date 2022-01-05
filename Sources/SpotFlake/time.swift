@@ -24,7 +24,7 @@ public extension TimeZone {
 
 public struct Time {
 	/// Seconds since `0001-01-01`
-	public let seconds: Int64
+	fileprivate let seconds: Int64
 	public let nanoseconds: Int32
 	public let zone: TimeZone?
 

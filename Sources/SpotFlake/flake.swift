@@ -67,7 +67,7 @@ public struct Flake {
 		}
 		
 		static func flakeTimestamp(_ t: Time) -> Int64 {
-			(t.seconds * TimeDuration.nanosecondsPerSecond + Int64(t.nanoseconds)) / TimeDuration.nanosecondsPerMillisecond
+			(t.unixSeconds * TimeDuration.nanosecondsPerSecond + Int64(t.nanoseconds)) / TimeDuration.nanosecondsPerMillisecond
 		}
 	}
 	
