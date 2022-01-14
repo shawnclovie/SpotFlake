@@ -23,6 +23,8 @@ public extension TimeZone {
 }
 
 public struct Time {
+	public static var zero: Self { .init(seconds: 0, nano: 0, zone: nil) }
+	
 	/// Seconds since `0001-01-01`
 	fileprivate let seconds: Int64
 	public let nanoseconds: Int32
@@ -63,10 +65,12 @@ public struct Time {
 		self.zone = zone
 	}
 	
+	/// Time for now without timezone.
 	public init() {
 		self.init(zone: nil)
 	}
 
+	/// Time for now.
 	public init(zone: TimeZone? = nil) {
 		var c_timespec = CTimeSpec(tv_sec: 0, tv_nsec: 0)
 		var retval: CInt = -1
