@@ -23,7 +23,11 @@ public struct Time: Sendable {
 	
 	/// Seconds since `0001-01-01`
 	fileprivate let seconds: Int64
+	
+	/// Part of time that less than 1 second.
 	public let nanoseconds: Int32
+	
+	/// Offset seconds to GMT.
 	public let offset: Int
 
 	public init(unix seconds: Int64, nano: Int64, offset: Int = 0) {
