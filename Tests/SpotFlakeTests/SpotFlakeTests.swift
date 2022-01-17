@@ -29,4 +29,16 @@ final class SpotFlakeTests: XCTestCase {
 		XCTAssert(id == Flake.ID(base36: b36))
 		XCTAssert(id == Flake.ID(base64: b64))
     }
+	
+	func testGenerateBenchmark() {
+		let opt = XCTMeasureOptions()
+		opt.iterationCount = 10000
+		let node = Flake.Node(node: 1)!
+		var ids: [Flake.ID] = []
+		self.measure(options: opt) {
+			let id = node.generate()
+			ids.append(id)
+		}
+		print(ids)
+	}
 }

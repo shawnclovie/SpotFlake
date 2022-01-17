@@ -18,19 +18,15 @@ import Foundation
 	private typealias CTimeSpec = mach_timespec_t
 #endif
 
-public extension TimeZone {
-	static var utc: TimeZone { .init(secondsFromGMT: 0)! }
-}
-
-public struct Time {
-	public static var zero: Self { .init(seconds: 0, nano: 0, zone: nil) }
+public struct Time: Sendable {
+	public static var zero: Self { .init(seconds: 0, nano: 0, offset: 0) }
 	
 	/// Seconds since `0001-01-01`
 	fileprivate let seconds: Int64
 	public let nanoseconds: Int32
-	public let zone: TimeZone?
+	public let offset: Int
 
-	public init(unix seconds: Int64, nano: Int64, zone: TimeZone? = nil) {
+	public init(unix seconds: Int64, nano: Int64, offset: Int = 0) {
 		var sec = seconds
 		var nano = nano
 		if nano < 0 || nano >= TimeDuration.nanosecondsPerSecond {
@@ -42,36 +38,37 @@ public struct Time {
 				sec -= 1
 			}
 		}
-		self.init(seconds: sec + unixToInternal, nano: nano, zone: zone)
+		self.init(seconds: sec + unixToInternal, nano: nano, offset: offset)
 	}
 
-	public init(unixMilli: Int64, zone: TimeZone? = nil) {
+	public init(unixMilli: Int64, offset: Int = 0) {
 		self.init(unix: unixMilli / 1000,
-		          nano: (unixMilli % 1000) * 1_000_000, zone: zone)
+		          nano: (unixMilli % 1000) * 1_000_000, offset: offset)
 	}
 
-	public init(unixMicro: Int64, zone: TimeZone? = nil) {
+	public init(unixMicro: Int64, offset: Int = 0) {
 		self.init(unix: unixMicro / 1_000_000,
-		          nano: (unixMicro % 1_000_000) * 1000, zone: zone)
+		          nano: (unixMicro % 1_000_000) * 1000, offset: offset)
 	}
 
-	public init(unixNano: Int64, zone: TimeZone? = nil) {
+	public init(unixNano: Int64, offset: Int = 0) {
 		self.init(unix: unixNano / TimeDuration.nanosecondsPerSecond,
-		          nano: unixNano % TimeDuration.nanosecondsPerSecond, zone: zone)
+		          nano: unixNano % TimeDuration.nanosecondsPerSecond,
+				  offset: offset)
 	}
 
-	public init(seconds: Int64, nano: Int64, zone: TimeZone? = nil) {
+	public init(seconds: Int64, nano: Int64, offset: Int = 0) {
 		(self.seconds, nanoseconds) = normalized(seconds: seconds, nano: nano)
-		self.zone = zone
+		self.offset = offset
 	}
 	
 	/// Time for now without timezone.
 	public init() {
-		self.init(zone: nil)
+		self.init(offset: 0)
 	}
 
 	/// Time for now.
-	public init(zone: TimeZone? = nil) {
+	public init(offset: Int) {
 		var c_timespec = CTimeSpec(tv_sec: 0, tv_nsec: 0)
 		var retval: CInt = -1
 
@@ -89,31 +86,31 @@ public struct Time {
 		#endif
 		if retval == 0 {
 			self.init(unix: Int64(c_timespec.tv_sec),
-			          nano: Int64(c_timespec.tv_nsec), zone: zone)
+			          nano: Int64(c_timespec.tv_nsec), offset: offset)
 		} else {
-			self.init(Date(), zone: zone)
+			self.init(Date(), offset: offset)
 		}
 	}
 
-	public init(_ date: Date, zone: TimeZone? = nil) {
+	public init(_ date: Date, offset: Int = 0) {
 		let sec = date.timeIntervalSince1970
 		self.init(unix: Int64(sec),
 		          nano: Int64((sec - floor(sec)) * TimeInterval(TimeDuration.nanosecondsPerSecond)),
-		          zone: zone)
+		          offset: offset)
 	}
 
 	public init(year: Int, month: Month, day: Int,
 	            hour: Int, minute: Int, second: Int, nano: Int,
-	            zone: TimeZone? = nil)
+				offset: Int = 0)
 	{
 		self.init(year: year, month: month.rawValue,
 		          day: day, hour: hour, minute: minute, second: second, nano: nano,
-		          zone: zone)
+		          offset: offset)
 	}
 
 	public init(year: Int, month: Int, day: Int,
 	            hour: Int, minute: Int, second: Int, nano: Int,
-	            zone: TimeZone? = nil)
+				offset: Int = 0)
 	{
 		// Normalize month, overflowing into year.
 		let (year, monthIndex) = normalized(year, month - 1, base: 12)
@@ -143,24 +140,22 @@ public struct Time {
 		ns += UInt64(hour * secondsPerHour + min * secondsPerMinute + sec)
 
 		var unix = Int64(ns) + (absoluteToInternal + internalToUnix)
-		let zone = zone ?? .utc
-		let offset = zone.secondsFromGMT()
 		if offset != 0 {
 			unix -= Int64(offset)
 		}
-		self.init(unix: unix, nano: Int64(nsec), zone: zone)
+		self.init(unix: unix, nano: Int64(nsec), offset: offset)
 	}
 
 	public func `in`(zone: TimeZone) -> Time {
-		.init(seconds: seconds, nano: Int64(nanoseconds), zone: zone)
+		.init(seconds: seconds, nano: Int64(nanoseconds), offset: zone.secondsFromGMT())
 	}
 
 	public var withUTC: Time {
-		.init(seconds: seconds, nano: Int64(nanoseconds), zone: .utc)
+		.init(seconds: seconds, nano: Int64(nanoseconds), offset: 0)
 	}
 
 	public var withLocal: Time {
-		.init(seconds: seconds, nano: Int64(nanoseconds), zone: .current)
+		.init(seconds: seconds, nano: Int64(nanoseconds), offset: TimeZone.current.secondsFromGMT())
 	}
 
 	public var asDate: Date {
@@ -176,7 +171,8 @@ public struct Time {
 		             month: dates.month.rawValue + months,
 		             day: dates.day + days,
 		             hour: clocks.hour, minute: clocks.minute, second: clocks.second,
-		             nano: Int(nanoseconds), zone: zone)
+		             nano: Int(nanoseconds),
+					 offset: offset)
 	}
 }
 
@@ -242,7 +238,7 @@ extension Time: Equatable, Comparable {
 			nsec += TimeDuration.nanosecondsPerSecond
 		}
 		let (sec, _) = t.seconds.addingReportingOverflow(dsec)
-		return .init(seconds: sec, nano: nsec, zone: t.zone)
+		return .init(seconds: sec, nano: nsec, offset: t.offset)
 	}
 
 	public static func - (lhs: Self, rhs: Self) -> TimeDuration {
@@ -308,8 +304,7 @@ extension Time {
 	/// Get the time as an absolute time, adjusted by the zone offset.
 	/// It is called when computing a presentation property like Month or Hour.
 	var nanosecondsInZone: UInt64 {
-		let zone = self.zone ?? .utc
-		let sec = unixSeconds + Int64(zone.secondsFromGMT())
+		let sec = unixSeconds + Int64(offset)
 		return UInt64(sec + unixToInternal + internalToAbsolute)
 	}
 

@@ -39,7 +39,7 @@ final class TimeTests: XCTestCase {
 		let timeResult = Time(seconds: 0, nano: 876_543_211)
 		XCTAssert(timeOver == timeResult)
 		
-		let t1 = Time(year: 2020, month: .october, day: 1, hour: 0, minute: 10, second: 10, nano: 2, zone: .utc)
+		let t1 = Time(year: 2020, month: .october, day: 1, hour: 0, minute: 10, second: 10, nano: 2, offset: 0)
 		XCTAssertEqual(t1.clock, .init(hour: 0, minute: 10, second: 10))
 		XCTAssertEqual(t1.add(years: 1, months: 1, days: 1).date,
 					   .init(year: 2021, month: .november, day: 2))

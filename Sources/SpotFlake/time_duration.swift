@@ -1,6 +1,6 @@
 import Foundation
 
-public struct TimeDuration {
+public struct TimeDuration: Sendable {
 	public enum ParseError: Error {
 		case invalidLeadingInt
 		case invalidDuration
@@ -32,7 +32,7 @@ public struct TimeDuration {
 	}
 
 	public static func since(_ t: Time) -> Self {
-		Time(zone: t.zone) - t
+		Time(offset: t.offset) - t
 	}
 
 	public var microseconds: Int64 {
