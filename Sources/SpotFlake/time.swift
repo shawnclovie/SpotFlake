@@ -223,13 +223,19 @@ public extension Time {
 }
 
 extension Time: Equatable, Comparable {
+	public func isEqual(_ other: Self) -> Bool { self == other }
+
 	public static func == (lhs: Self, rhs: Self) -> Bool {
 		lhs.seconds == rhs.seconds && lhs.nanoseconds == rhs.nanoseconds
 	}
 
+	public func isBefore(_ other: Self) -> Bool { self < other }
+
 	public static func < (lhs: Self, rhs: Self) -> Bool {
 		lhs.seconds < rhs.seconds || (lhs.seconds == rhs.seconds && lhs.nanoseconds < rhs.nanoseconds)
 	}
+
+	public func after(_ dur: TimeDuration) -> Self { self + dur }
 
 	public static func + (t: Self, dur: TimeDuration) -> Self {
 		var dsec = dur.nanoseconds / TimeDuration.nanosecondsPerSecond
@@ -244,6 +250,8 @@ extension Time: Equatable, Comparable {
 		let (sec, _) = t.seconds.addingReportingOverflow(dsec)
 		return .init(seconds: sec, nano: nsec, offset: t.offset)
 	}
+
+	public func diff(_ other: Self) -> TimeDuration { self - other }
 
 	public static func - (lhs: Self, rhs: Self) -> TimeDuration {
 		let (d, _) = ((lhs.seconds - rhs.seconds) * TimeDuration.nanosecondsPerSecond)
