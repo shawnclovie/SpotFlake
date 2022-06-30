@@ -21,6 +21,12 @@ import Foundation
 public struct Time: Sendable {
 	public static var zero: Self { .init(seconds: 0, nano: 0, offset: 0) }
 	
+	public static var utc: Self { .init(offset: 0) }
+	
+	public static var local: Self {
+		.init(offset: TimeZone.current.secondsFromGMT())
+	}
+	
 	/// Seconds since `0001-01-01`
 	fileprivate let seconds: Int64
 	
