@@ -312,6 +312,18 @@ extension TimeDuration: Comparable, Equatable {
 	}
 }
 
+extension TimeDuration: Strideable {
+	public typealias Stride = Int64
+
+	public func distance(to other: TimeDuration) -> Int64 {
+		other.nanoseconds - nanoseconds
+	}
+
+	public func advanced(by n: Int64) -> TimeDuration {
+		.init(nanoseconds + n)
+	}
+}
+
 extension TimeDuration: AdditiveArithmetic {
 	/// The zero value for `TimeDuration`.
 	public static var zero: TimeDuration {
