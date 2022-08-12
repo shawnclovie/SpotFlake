@@ -229,23 +229,25 @@ public extension Time {
 }
 
 extension Time: Equatable, Comparable {
-	public func isEqual(_ other: Self) -> Bool { self == other }
+	public func isEqual(_ other: Self) -> Bool {
+		seconds == other.seconds && nanoseconds == other.nanoseconds
+	}
 
 	public static func == (lhs: Self, rhs: Self) -> Bool {
-		lhs.seconds == rhs.seconds && lhs.nanoseconds == rhs.nanoseconds
+		lhs.isEqual(rhs)
 	}
 
-	public func isBefore(_ other: Self) -> Bool { self < other }
+	public func isBefore(_ other: Self) -> Bool {
+		seconds < other.seconds || (seconds == other.seconds && nanoseconds < other.nanoseconds)
+	}
 
 	public static func < (lhs: Self, rhs: Self) -> Bool {
-		lhs.seconds < rhs.seconds || (lhs.seconds == rhs.seconds && lhs.nanoseconds < rhs.nanoseconds)
+		lhs.isBefore(rhs)
 	}
 
-	public func after(_ dur: TimeDuration) -> Self { self + dur }
-
-	public static func + (t: Self, dur: TimeDuration) -> Self {
+	public func after(_ dur: TimeDuration) -> Self {
 		var dsec = dur.nanoseconds / TimeDuration.nanosecondsPerSecond
-		var nsec = Int64(t.nanoseconds) + dur.nanoseconds % TimeDuration.nanosecondsPerSecond
+		var nsec = Int64(nanoseconds) + dur.nanoseconds % TimeDuration.nanosecondsPerSecond
 		if nsec >= TimeDuration.nanosecondsPerSecond {
 			dsec += 1
 			nsec -= TimeDuration.nanosecondsPerSecond
@@ -253,20 +255,38 @@ extension Time: Equatable, Comparable {
 			dsec -= 1
 			nsec += TimeDuration.nanosecondsPerSecond
 		}
-		let (sec, _) = t.seconds.addingReportingOverflow(dsec)
-		return .init(seconds: sec, nano: nsec, offset: t.offset)
+		let (sec, _) = seconds.addingReportingOverflow(dsec)
+		return .init(seconds: sec, nano: nsec, offset: offset)
 	}
 
-	public func diff(_ other: Self) -> TimeDuration { self - other }
+	public static func + (t: Self, dur: TimeDuration) -> Self {
+		t.after(dur)
+	}
 
-	public static func - (lhs: Self, rhs: Self) -> TimeDuration {
-		let (d, _) = ((lhs.seconds - rhs.seconds) * TimeDuration.nanosecondsPerSecond)
-			.addingReportingOverflow(Int64(lhs.nanoseconds - rhs.nanoseconds))
+	public func diff(_ other: Self) -> TimeDuration {
+		let (d, _) = ((seconds - other.seconds) * TimeDuration.nanosecondsPerSecond)
+			.addingReportingOverflow(Int64(nanoseconds - other.nanoseconds))
 		let dur = TimeDuration(d)
-		if rhs + dur == lhs {
+		if other.after(dur) == self {
 			return dur
 		}
-		return .init(lhs < rhs ? .min : .max)
+		return .init(self < other ? .min : .max)
+	}
+
+	public static func - (lhs: Self, rhs: Self) -> TimeDuration {
+		lhs.diff(rhs)
+	}
+}
+
+extension Time: Strideable {
+	public typealias Stride = Int64
+	
+	public func distance(to other: Time) -> Int64 {
+		other.diff(self).nanoseconds
+	}
+	
+	public func advanced(by n: Int64) -> Time {
+		after(.init(n))
 	}
 }
 
