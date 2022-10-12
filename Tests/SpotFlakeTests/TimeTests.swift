@@ -64,7 +64,9 @@ final class TimeTests: XCTestCase {
 		let fmt = TimeFormatter()
 		for text in texts {
 			let time = fmt.parse(date: text)
-			print("\(text)\n>>> \(time.map(fmt.format(_:)) ?? "")")
+			print("\(text)\n>>> \(time.map({ fmt.format($0) }) ?? "")")
 		}
+		
+		print(fmt.format(.utc, options: [.spaceSeparator, .noTimeZone]))
 	}
 }

@@ -355,17 +355,6 @@ extension TimeDuration: AdditiveArithmetic {
 	}
 }
 
-@available(macOS 13.0, iOS 16.0, watchOS 9.0, tvOS 16.0, *)
-extension TimeDuration: DurationProtocol {
-	public static func / (lhs: TimeDuration, rhs: Int) -> TimeDuration {
-		.init(lhs.nanoseconds / Int64(rhs))
-	}
-	
-	public static func / (lhs: TimeDuration, rhs: TimeDuration) -> Double {
-		Double(lhs.nanoseconds) / Double(rhs.nanoseconds)
-	}
-}
-
 public extension TimeDuration {
 	static let nanosecondsPerMicrosecond: Int64 = 1000
 	static let nanosecondsPerMillisecond: Int64 = 1000 * nanosecondsPerMicrosecond

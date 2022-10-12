@@ -291,21 +291,7 @@ extension Time: Strideable {
 	}
 }
 
-@available(macOS 13.0, iOS 16.0, watchOS 9.0, tvOS 16.0, *)
-extension Time: InstantProtocol {
-	public typealias Duration = TimeDuration
-
-	public func advanced(by duration: TimeDuration) -> Time {
-		self + duration
-	}
-	
-	public func duration(to other: Time) -> TimeDuration {
-		self - other
-	}
-}
-
 extension Time {
-
 	public struct DateComponents: Equatable {
 		public var year: Int
 		public var month: Month

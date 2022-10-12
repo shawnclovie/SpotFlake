@@ -59,12 +59,28 @@ public struct TimeFormatter {
 					second: sec, nano: nano, offset: offset)
 	}
 	
-	public func format(_ time: Time) -> String {
-		let offsetSuffix = formatOffset(time)
+	public struct WriteOption: OptionSet {
+		/// Separate date and time with SPACE instead `"T"`.
+		public static let spaceSeparator = Self(rawValue: 1)
+
+		/// Do not write timezone part (Z or +0800).
+		public static let noTimeZone = Self(rawValue: 2)
+
+		public let rawValue: Int8
+		
+		public init(rawValue: Int8) {
+			self.rawValue = rawValue
+		}
+	}
+	
+	public func format(_ time: Time, options: WriteOption = []) -> String {
 		let comps = time.date
-		return String(format: "%04d-%02d-%02dT%02d:%02d:%02d%@",
+		let separator = options.contains(.spaceSeparator) ? " " : "T"
+		return String(format: "%04d-%02d-%02d%@%02d:%02d:%02d%@",
 					  comps.year, comps.month.rawValue, comps.day,
-					  time.hour, time.minute, time.second, offsetSuffix)
+					  separator,
+					  time.hour, time.minute, time.second,
+					  options.contains(.noTimeZone) ? "" : formatOffset(time))
 	}
 	
 	public func formatOffset(_ time: Time) -> String {
