@@ -143,13 +143,14 @@ public struct Time: Sendable {
 		}
 
 		// Add in days before today.
-		d += UInt64(day - 1)
-
+		if day > 0 {
+			d += UInt64(day - 1)
+		}
 		// Add in time elapsed today.
 		var ns = d * UInt64(secondsPerDay)
 		ns += UInt64(hour * secondsPerHour + min * secondsPerMinute + sec)
-
-		var unix = Int64(ns) + (absoluteToInternal + internalToUnix)
+		var unix = Int64(exactly: ns) ?? unixToInternal
+		unix += (absoluteToInternal + internalToUnix)
 		if offset != 0 {
 			unix -= Int64(offset)
 		}

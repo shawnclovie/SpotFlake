@@ -32,7 +32,7 @@ final class TimeTests: XCTestCase {
 			let reparsed = TimeDuration.parse(dur.description)
 			XCTAssertEqual(reparsed, dur)
 		}
-}
+	}
 	
 	func testTime() {
 		let timeOver = Time(seconds: 3, nano: -2_123_456_789)
@@ -45,5 +45,26 @@ final class TimeTests: XCTestCase {
 					   .init(year: 2021, month: .november, day: 2))
 		XCTAssertEqual(t1.add(years: 1, months: 1, days: 100).date,
 					   .init(year: 2022, month: .february, day: 9))
+		let te = Time(year: 20221014, month: 0, day: 0, hour: 0, minute: 0, second: 0, nano: 0, offset: 0)
+		print(te.asDate)
+	}
+
+	func testTimeParser() {
+		let texts = [
+			"2020112-4-2T13:00:03Z", // RFC3339
+			"2022-10-11",
+			"2022-10-11 13:43:15.324 +08:00", // from postgres
+			"2022-10-11 13:43:15 +0000", // from postgres
+			"2022-10-11 13:43:15 +0800", // from postgres
+			"2022-10-11 13:43:15 +08:00", // from postgres
+			"2020-11-2T13:00:03+0200", // RFC3339
+			"2020-11-2T13:00:03Z", // RFC3339
+			"2020-11-2T13:00:03.366Z", // RFC3339
+		]
+		let fmt = TimeFormatter()
+		for text in texts {
+			let time = fmt.parse(date: text)
+			print("\(text)\n>>> \(time.map(fmt.format(_:)) ?? "")")
+		}
 	}
 }
