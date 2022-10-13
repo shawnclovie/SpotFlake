@@ -15,47 +15,68 @@ public struct TimeFormatter {
 	public init(format: String = Self.hyphenDateFormat) {
 		self.format = format
 	}
+	
+	private struct Parser {
+		var parseCount = 0
+		var year = 0, month = 0, day = 0
+		var hour = 0, minute = 0
+		var second: Double = 0.0
+		var hourOffset = 0, minuteOffset = 0
+		
+		mutating func scan(_ string: String) {
+			let scanner = Scanner(string: string)
+			guard scanner.scanInt(&year) else { return }
+			parseCount += 1
+			_ = scanner.scanCharacter()
+			guard scanner.scanInt(&month) else { return }
+			parseCount += 1
+			_ = scanner.scanCharacter()
+			guard scanner.scanInt(&day) else { return }
+			parseCount += 1
+			_ = scanner.scanCharacter()
+			guard scanner.scanInt(&hour) else { return }
+			parseCount += 1
+			_ = scanner.scanCharacter()
+			guard scanner.scanInt(&minute) else { return }
+			parseCount += 1
+			_ = scanner.scanCharacter()
+			guard let sec = scanner.scanDouble(representation: .decimal) else { return }
+			parseCount += 1
+			second = sec
+			guard scanner.scanInt(&hourOffset) else { return }
+			parseCount += 1
+			guard scanner.scanInt(&minuteOffset) else { return }
+			parseCount += 1
+		}
+	}
 
 	public func parse(date string: String) -> Time? {
-		let year = UnsafeMutablePointer<Int>.allocate(capacity: 1)
-		let month = UnsafeMutablePointer<Int>.allocate(capacity: 1)
-		let day = UnsafeMutablePointer<Int>.allocate(capacity: 1)
-		let hour = UnsafeMutablePointer<Int>.allocate(capacity: 1)
-		let minute = UnsafeMutablePointer<Int>.allocate(capacity: 1)
-		let second = UnsafeMutablePointer<Float>.allocate(capacity: 1)
-		let hourOffset = UnsafeMutablePointer<Int>.allocate(capacity: 1)
-		let minuteOffset = UnsafeMutablePointer<Int>.allocate(capacity: 1)
-
 		var string = string
 		if let range = string.range(of: " ") {
 			string.replaceSubrange(range, with: "T")
 		}
-		let parseCount = withVaList([
-			year, month, day, hour, minute, second,
-			hourOffset, minuteOffset,
-		], { pointer in
-			vsscanf(string, format, pointer)
-		})
-		guard parseCount >= 3 else {
+		var parser = Parser()
+		parser.scan(string)
+		guard parser.parseCount >= 3 else {
 			return nil
 		}
 		// Work out the timezone offset
 		let offset: Int
-		if parseCount > 6 && (hourOffset.pointee != 0 || minuteOffset.pointee != 0) {
-			let isMinusOffset = hourOffset.pointee < 0
-			var hOffset = abs(hourOffset.pointee)
-			if parseCount == 7 && hOffset > 100 {
-				minuteOffset.pointee = hOffset - (hOffset / 100 * 100)
+		if parser.parseCount > 6 && (parser.hourOffset != 0 || parser.minuteOffset != 0) {
+			let isMinusOffset = parser.hourOffset < 0
+			var hOffset = abs(parser.hourOffset)
+			if parser.parseCount == 7 && hOffset > 100 {
+				parser.minuteOffset = hOffset - (hOffset / 100 * 100)
 				hOffset /= 100
 			}
-			offset = (hOffset * 3600 + minuteOffset.pointee * 60) * (isMinusOffset ? -1 : 1)
+			offset = (hOffset * 3600 + parser.minuteOffset * 60) * (isMinusOffset ? -1 : 1)
 		} else {
 			offset = 0
 		}
-		let sec = Int(second.pointee)
-		let nano = Int((second.pointee - Float(sec)) * 1e9)
-		return Time(year: year.pointee, month: month.pointee, day: day.pointee,
-					hour: hour.pointee, minute: minute.pointee,
+		let sec = Int(parser.second)
+		let nano = Int((parser.second - Double(sec)) * 1e9)
+		return Time(year: parser.year, month: parser.month, day: parser.day,
+					hour: parser.hour, minute: parser.minute,
 					second: sec, nano: nano, offset: offset)
 	}
 	
@@ -66,6 +87,8 @@ public struct TimeFormatter {
 		/// Do not write timezone part (Z or +0800).
 		public static let noTimeZone = Self(rawValue: 2)
 
+		public static let withMilliseconds = Self(rawValue: 4)
+
 		public let rawValue: Int8
 		
 		public init(rawValue: Int8) {
@@ -74,13 +97,19 @@ public struct TimeFormatter {
 	}
 	
 	public func format(_ time: Time, options: WriteOption = []) -> String {
-		let comps = time.date
+		let date = time.date
+		let clock = time.clock
 		let separator = options.contains(.spaceSeparator) ? " " : "T"
-		return String(format: "%04d-%02d-%02d%@%02d:%02d:%02d%@",
-					  comps.year, comps.month.rawValue, comps.day,
-					  separator,
-					  time.hour, time.minute, time.second,
-					  options.contains(.noTimeZone) ? "" : formatOffset(time))
+		var s = String(format: "%04d-%02d-%02d%@%02d:%02d:%02d",
+					   date.year, date.month.rawValue, date.day,
+					   separator, clock.hour, clock.minute, clock.second)
+		if options.contains(.withMilliseconds) && clock.millisecond > 0 {
+			s += .init(format: ".%03d", clock.millisecond)
+		}
+		if !options.contains(.noTimeZone) {
+			s += formatOffset(time)
+		}
+		return s
 	}
 	
 	public func formatOffset(_ time: Time) -> String {

@@ -123,7 +123,7 @@ public struct Time: Sendable {
 				offset: Int = 0)
 	{
 		// Normalize month, overflowing into year.
-		let (year, monthIndex) = normalized(year, month - 1, base: 12)
+		let (year, monthIndex) = normalized(max(year, absoluteZeroYear), month - 1, base: 12)
 		let month = Month(rawValue: monthIndex + 1)!
 
 		// Normalize nsec, sec, min, hour, overflowing into day.
@@ -207,7 +207,7 @@ public extension Time {
 	var date: DateComponents { dateComponents(full: true) }
 
 	var clock: ClockComponents {
-		Self.clockComponents(nanosecondsInZone)
+		Self.clockComponents(nanosecondsInZone, nanoseconds: nanoseconds)
 	}
 
 	var year: Int { dateComponents(full: false).year }
@@ -314,11 +314,13 @@ extension Time {
 		public var hour: Int
 		public var minute: Int
 		public var second: Int
+		public var millisecond: Int
 
-		public init(hour: Int, minute: Int, second: Int) {
+		public init(hour: Int, minute: Int, second: Int, millisecond: Int = 0) {
 			self.hour = hour
 			self.minute = minute
 			self.second = second
+			self.millisecond = millisecond
 		}
 	}
 
@@ -428,13 +430,14 @@ extension Time {
 		year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)
 	}
 
-	static func clockComponents(_ ns: UInt64) -> ClockComponents {
-		var sec = Int(ns % UInt64(secondsPerDay))
+	static func clockComponents(_ nsInZone: UInt64, nanoseconds: Int32) -> ClockComponents {
+		var sec = Int(nsInZone % UInt64(secondsPerDay))
 		let hour = sec / secondsPerHour
 		sec -= hour * secondsPerHour
 		let min = sec / secondsPerMinute
 		sec -= min * secondsPerMinute
-		return .init(hour: hour, minute: min, second: sec)
+		let ms = (Int64(nanoseconds) % TimeDuration.nanosecondsPerSecond) / TimeDuration.nanosecondsPerMillisecond
+		return .init(hour: hour, minute: min, second: sec, millisecond: Int(ms))
 	}
 
 	/// Takes a year and returns the number of days from the absolute epoch to the start of that year.
