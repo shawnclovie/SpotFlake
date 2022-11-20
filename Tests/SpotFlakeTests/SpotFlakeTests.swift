@@ -22,12 +22,20 @@ final class SpotFlakeTests: XCTestCase {
 		XCTAssert(ids.count == count)
 		
 		let id = Flake.ID(324932740761784320)
+		let b2 = "10010000010011001001001101100101101000000000001000000000000"
+		let b32 = "jyurucsoyryy"
 		let b36 = "2gvf1kdqtc00"
+		let b58 = "KKhC7rdSPA"
 		let b64 = "MzI0OTMyNzQwNzYxNzg0MzIw"
-		XCTAssert(id.base36 == b36)
-		XCTAssert(id.base64 == b64)
-		XCTAssert(id == Flake.ID(base36: b36))
-		XCTAssert(id == Flake.ID(base64: b64))
+		XCTAssertEqual(id.base2, b2)
+		XCTAssertEqual(id.base32, b32)
+		XCTAssertEqual(id.base36, b36)
+		XCTAssertEqual(id.base58, b58)
+		XCTAssertEqual(id.base64, b64)
+		XCTAssertEqual(id, Flake.ID(base2: b2))
+		XCTAssertEqual(id, Flake.ID(base36: b36))
+		XCTAssertEqual(id, Flake.ID(base64: b64))
+		XCTAssertEqual(id.time, TimeFormatter().parse(date: "2020-06-15T15:26:42.356Z")?.unixMilliseconds)
     }
 	
 	func testGenerateBenchmark() {

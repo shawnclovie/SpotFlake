@@ -46,7 +46,8 @@ public struct Flake {
 			mu = NSLock()
 			self.node = node
 		}
-
+		
+		/// Generate next `ID`.
 		public func generate() -> ID {
 			mu.lock()
 			var now = Self.flakeTimestamp(.init())
@@ -72,6 +73,7 @@ public struct Flake {
 	}
 	
 	public struct ID: CustomStringConvertible, Equatable, Hashable {
+		/// Mixed value, contains: nodeID, time in milliseconds, index.
 		public let rawValue: Int64
 		
 		public init(_ rawValue: Int64) {
@@ -79,46 +81,59 @@ public struct Flake {
 		}
 		
 		public init?(base2: String) {
-			guard let v = Int64(base2, radix: 2) else { return nil }
+			guard let v = Int64(base2, radix: 2) else {
+				return nil
+			}
 			rawValue = v
 		}
 		
+		/// Parses a base32 bytes into a snowflake ID
+		///
+		/// NOTE: There are many different base32 implementations so becareful when doing any interoperation.
 		public init?(base32: [UInt8]) {
 			var id: Int64 = 0
 			for i in base32 {
-				if decodeBase32Map[Int(i)] == 0xFF {
+				if BaseMapping.shared.decodeBase32Map[Int(i)] == 0xFF {
 					return nil
 				}
-				id = id*32 + Int64(decodeBase32Map[Int(i)])
+				id = id*32 + Int64(BaseMapping.shared.decodeBase32Map[Int(i)])
 			}
 			rawValue = id
 		}
 		
 		public init?(base36: String) {
-			guard let v = Int64(base36, radix: 36) else { return nil }
+			guard let v = Int64(base36, radix: 36) else {
+				return nil
+			}
 			rawValue = v
 		}
 		
 		public init?(base58: [UInt8]) {
 			var id: Int64 = 0
 			for i in base58 {
-				if decodeBase58Map[Int(i)] == 0xFF {
+				if BaseMapping.shared.decodeBase58Map[Int(i)] == 0xFF {
 					return nil
 				}
-				id = id*58 + Int64(decodeBase58Map[Int(i)])
+				id = id*58 + Int64(BaseMapping.shared.decodeBase58Map[Int(i)])
 			}
 			rawValue = id
 		}
 		
 		public init?(base64: String) {
-			guard let d = Data(base64Encoded: base64) else { return nil }
+			guard let d = Data(base64Encoded: base64) else {
+				return nil
+			}
 			let s = String(decoding: d, as: UTF8.self)
-			guard let v = Int64(s) else { return nil }
+			guard let v = Int64(s) else {
+				return nil
+			}
 			rawValue = v
 		}
 		
 		public init?(string: String) {
-			guard let v = Int64(string) else { return nil }
+			guard let v = Int64(string) else {
+				return nil
+			}
 			rawValue = v
 		}
 		
@@ -128,8 +143,14 @@ public struct Flake {
 
 		public var description: String { String(rawValue, radix: 10) }
 		
+		/// Base2 form string - longest form.
 		public var base2: String { String(rawValue, radix: 2) }
 		
+		/// Base32 form string - shorter.
+		///
+		/// `base32` uses the z-base-32 character set but encodes and decodes similar to base58, allowing it to create an even smaller result string.
+		///
+		/// NOTE: There are many different base32 implementations so becareful when doing any interoperation.
 		public var base32: String {
 			let base: Int64 = 32
 			if rawValue < base {
@@ -151,8 +172,10 @@ public struct Flake {
 			return String(b)
 		}
 		
+		/// Base36 form string - simple and shorter.
 		public var base36: String { String(rawValue, radix: 36) }
 		
+		/// Base58 form string - shortest form.
 		public var base58: String {
 			let base: Int64 = 58
 			if rawValue < base {
@@ -174,12 +197,15 @@ public struct Flake {
 			return String(b)
 		}
 		
+		/// Standard Base64 form string - medium short.
 		public var base64: String { bytes.base64EncodedString() }
 		
 		public var bytes: Data { Data(description.utf8) }
 		
+		/// Milliseconds since 1970.
 		public var time: Int64 { (rawValue >> timeShift) + epoch }
 		
+		/// Node identity.
 		public var node: Int64 { rawValue & nodeMask >> stepBits }
 		
 		public var step: Int64 { rawValue & nodeMask >> stepBits }
@@ -188,17 +214,21 @@ public struct Flake {
 
 private let encodeBase32Map = "ybndrfg8ejkmcpqxot1uwisza345h769".map({$0})
 
-private var decodeBase32Map = [UInt8](repeating: 0xFF, count: encodeBase32Map.count)
-
 private let encodeBase58Map = "123456789abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ".map({$0})
 
-private var decodeBase58Map = [UInt8](repeating: 0xFF, count: encodeBase58Map.count)
+private struct BaseMapping {
+	static let shared = BaseMapping()
+	
+	private(set) var decodeBase32Map = [UInt8](repeating: 0xFF, count: encodeBase32Map.count)
 
-private func initMap() {
-	for it in encodeBase58Map.enumerated() {
-		decodeBase58Map[Int(it.element.asciiValue!)] = UInt8(it.offset)
-	}
-	for it in encodeBase32Map.enumerated() {
-		decodeBase32Map[Int(it.element.asciiValue!)] = UInt8(it.offset)
+	private(set) var decodeBase58Map = [UInt8](repeating: 0xFF, count: encodeBase58Map.count)
+
+	init() {
+		for it in encodeBase58Map.enumerated() {
+			decodeBase58Map[Int(it.element.asciiValue!)] = UInt8(it.offset)
+		}
+		for it in encodeBase32Map.enumerated() {
+			decodeBase32Map[Int(it.element.asciiValue!)] = UInt8(it.offset)
+		}
 	}
 }
