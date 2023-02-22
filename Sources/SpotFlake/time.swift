@@ -217,6 +217,8 @@ public extension Time {
 	var day: Int { dateComponents(full: true).day }
 
 	var yearDay: Int { dateComponents(full: false).yearDay }
+	
+	var weekday: Weekday { Self.absWeekday(nanosecondsInZone) }
 
 	var hour: Int {
 		Int(nanosecondsInZone % UInt64(secondsPerDay)) / secondsPerHour
@@ -324,7 +326,7 @@ extension Time {
 		}
 	}
 
-	public enum Month: Int, Equatable {
+	public enum Month: Int, Equatable, CaseIterable {
 		case january = 1
 		case february
 		case march
@@ -337,6 +339,81 @@ extension Time {
 		case october
 		case november
 		case december
+		
+		public init?(shortName: String) {
+			guard let index = Self.shortNames.firstIndex(of: shortName) else {
+				return nil
+			}
+			self = Self.allCases[index]
+		}
+
+		public init?(named name: String) {
+			guard let index = Self.names.firstIndex(of: name) else {
+				return nil
+			}
+			self = Self.allCases[index]
+		}
+		
+		public var name: String {
+			Self.names[rawValue - 1]
+		}
+		
+		public var shortName: String {
+			Self.shortNames[rawValue - 1]
+		}
+
+		static let names = [
+			"January", "February", "March", "April",
+			"May", "June", "July", "August",
+			"September", "October", "November", "December",
+		]
+
+		static let shortNames = [
+			"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+			"Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+		]
+	}
+
+	public enum Weekday: Int, Equatable, CaseIterable {
+		case sunday = 0
+		case monday
+		case tuesday
+		case wednesday
+		case thursday
+		case friday
+		case saturday
+		
+		public init?(shortName: String) {
+			guard let index = Self.shortNames.firstIndex(of: shortName) else {
+				return nil
+			}
+			self = Self.allCases[index]
+		}
+
+		public init?(named name: String) {
+			guard let index = Self.names.firstIndex(of: name) else {
+				return nil
+			}
+			self = Self.allCases[index]
+		}
+		
+		public var name: String {
+			Self.names[rawValue]
+		}
+		
+		public var shortName: String {
+			Self.shortNames[rawValue]
+		}
+
+		static let names = [
+			"Sunday", "Monday", "Tuesday", "Wednesday",
+			"Thursday", "Friday", "Saturday",
+		]
+
+		static let shortNames = [
+			"Sun", "Mon", "Tue", "Wed",
+			"Thu", "Fri", "Sat",
+		]
 	}
 }
 
@@ -347,6 +424,15 @@ extension Time {
 		let sec = unixSeconds + Int64(offset)
 		return UInt64(sec + unixToInternal + internalToAbsolute)
 	}
+	
+	/// absWeekday is like Weekday but operates on an absolute time.
+	static func absWeekday(_ abs: UInt64) -> Weekday {
+		// January 1 of the absolute year, like January 1 of 2001, was a Monday.
+		let sec = (Int(abs) + secondsPerDay) % secondsPerWeek
+		let index = (Int(sec) / secondsPerDay) % Weekday.allCases.count
+		return Weekday.allCases[index]
+	}
+
 
 	func dateComponents(full: Bool) -> DateComponents {
 		Self.dateComponents(nanosecondsInZone, full: full)

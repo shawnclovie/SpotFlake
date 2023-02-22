@@ -45,6 +45,9 @@ final class TimeTests: XCTestCase {
 					   .init(year: 2021, month: .november, day: 2))
 		XCTAssertEqual(t1.add(years: 1, months: 1, days: 100).date,
 					   .init(year: 2022, month: .february, day: 9))
+		XCTAssertEqual(t1.weekday, .thursday)
+		XCTAssertEqual(t1.weekday.shortName, "Thu")
+		XCTAssertEqual(t1.weekday.name, "Thursday")
 		let te = Time(year: 20221014, month: 0, day: 0, hour: 0, minute: 0, second: 0, nano: 0, offset: 0)
 		print(te.asDate)
 	}
@@ -61,12 +64,29 @@ final class TimeTests: XCTestCase {
 			"2020-11-2T13:00:03Z", // RFC3339
 			"2020-11-2T13:00:03.366Z", // RFC3339
 		]
-		let fmt = TimeFormatter()
+		let layout = TimeLayout.rfc3339Millisecond
 		for text in texts {
-			let time = fmt.parse(date: text)
-			print("   \(text)\n>> \(time.map({ fmt.format($0, options: [.withMilliseconds]) }) ?? "")")
+			let time = Time.parse(date: text)
+			print("   \(text)\n>> \(time.map({ layout.format($0) }) ?? "")")
 		}
-		
-		print(fmt.format(.utc, options: [.spaceSeparator, .noTimeZone]))
+	}
+	
+	func testTimeFormat() {
+		let time = Time(year: 2020, month: .october, day: 1, hour: 13, minute: 10, second: 10, nano: 31_314_622, offset: 28800)
+		for layout in [
+			.ansiC,
+			.rfc3339,
+			.rfc3339Millisecond,
+			.rfc3339Nanosecond,
+			.rfc822,
+			.rfc822Z,
+			.rfc850,
+			.init(components: [.hour(.ampm), .string(":"), .minute, .ampm]),
+		] as [TimeLayout] {
+			print(layout.format(time))
+		}
+		measure {
+			_ = TimeLayout.rfc3339Millisecond.format(time)
+		}
 	}
 }

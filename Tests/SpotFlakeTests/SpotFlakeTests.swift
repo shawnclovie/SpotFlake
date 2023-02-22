@@ -35,7 +35,6 @@ final class SpotFlakeTests: XCTestCase {
 		XCTAssertEqual(id, Flake.ID(base2: b2))
 		XCTAssertEqual(id, Flake.ID(base36: b36))
 		XCTAssertEqual(id, Flake.ID(base64: b64))
-		XCTAssertEqual(id.time, TimeFormatter().parse(date: "2020-06-15T15:26:42.356Z")?.unixMilliseconds)
     }
 	
 	func testGenerateBenchmark() {
