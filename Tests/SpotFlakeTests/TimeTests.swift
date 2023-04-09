@@ -54,6 +54,7 @@ final class TimeTests: XCTestCase {
 
 	func testTimeParser() {
 		let texts = [
+			"0001-01-01T00:00:00Z",
 			"2020112-4-2T13:00:03Z", // RFC3339
 			"2022-10-11",
 			"2022-10-11 13:43:15.324 +08:00", // from postgres

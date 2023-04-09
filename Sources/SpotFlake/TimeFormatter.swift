@@ -95,6 +95,13 @@ public struct TimeLayout {
 	
 	public enum YearStyle {
 		case full, inCentry
+
+		var digitCount: Int {
+			switch self {
+			case .full:		return 4
+			case .inCentry:	return 2
+			}
+		}
 	}
 	
 	public enum MonthStyle {
@@ -137,11 +144,19 @@ public struct TimeLayout {
 			case .string(let s):
 				str += s
 			case .year(let style):
+				let v: Int
 				switch style {
 				case .full:
-					str += "\(date.year)"
+					v = date.year
 				case .inCentry:
-					str += "\(date.year - date.year / 100 * 100)"
+					v = date.year - date.year / 100 * 100
+				}
+				let s = "\(v)"
+				let leadingZeroCount = style.digitCount - s.count
+				if leadingZeroCount > 0 {
+					str += String(repeating: "0", count: leadingZeroCount) + s
+				} else {
+					str += s
 				}
 			case .month(let style):
 				switch style {
