@@ -236,6 +236,7 @@ extension Time: Equatable, Comparable {
 		seconds == other.seconds && nanoseconds == other.nanoseconds
 	}
 
+	@inlinable
 	public static func == (lhs: Self, rhs: Self) -> Bool {
 		lhs.isEqual(rhs)
 	}
@@ -244,6 +245,7 @@ extension Time: Equatable, Comparable {
 		seconds < other.seconds || (seconds == other.seconds && nanoseconds < other.nanoseconds)
 	}
 
+	@inlinable
 	public static func < (lhs: Self, rhs: Self) -> Bool {
 		lhs.isBefore(rhs)
 	}
@@ -262,8 +264,19 @@ extension Time: Equatable, Comparable {
 		return .init(seconds: sec, nano: nsec, offset: offset)
 	}
 
+	@inlinable
+	public func before(_ dur: TimeDuration) -> Self {
+		after(-dur)
+	}
+
+	@inlinable
 	public static func + (t: Self, dur: TimeDuration) -> Self {
 		t.after(dur)
+	}
+
+	@inlinable
+	public static func - (t: Self, dur: TimeDuration) -> Self {
+		t.after(-dur)
 	}
 
 	public func diff(_ other: Self) -> TimeDuration {

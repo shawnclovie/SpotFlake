@@ -33,6 +33,14 @@ final class TimeTests: XCTestCase {
 			XCTAssertEqual(reparsed, dur)
 		}
 	}
+
+	func testTimeDuration() {
+		let dur1 = TimeDuration.parse("23h44m")
+		let dur2 = TimeDuration.parse("44m")
+		XCTAssertEqual(TimeDuration.components(hours: 23), dur1 - dur2)
+		XCTAssertEqual(TimeDuration.components(minutes: 88), dur2 * 2)
+		XCTAssertEqual(TimeDuration.components(minutes: 22), dur2 / 2)
+	}
 	
 	func testTime() {
 		let timeOver = Time(seconds: 3, nano: -2_123_456_789)

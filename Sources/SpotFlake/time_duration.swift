@@ -338,6 +338,11 @@ extension TimeDuration: AdditiveArithmetic {
 		lhs = lhs + rhs
 	}
 
+	@inlinable
+	public static prefix func - (lhs: Self) -> Self {
+		.init(lhs.nanoseconds)
+	}
+
 	public static func - (lhs: Self, rhs: Self) -> Self {
 		.init(lhs.nanoseconds - rhs.nanoseconds)
 	}
@@ -352,6 +357,10 @@ extension TimeDuration: AdditiveArithmetic {
 
 	public static func * <T: BinaryInteger>(lhs: Self, rhs: T) -> Self {
 		.init(lhs.nanoseconds * Int64(rhs))
+	}
+
+	public static func / <T: BinaryInteger>(lhs: Self, rhs: T) -> Self {
+		.init(lhs.nanoseconds / Int64(rhs))
 	}
 }
 
