@@ -110,7 +110,7 @@ public struct Time: Sendable {
 	}
 
 	public init(year: Int, month: Month, day: Int,
-	            hour: Int, minute: Int, second: Int, nano: Int,
+	            hour: Int = 0, minute: Int = 0, second: Int = 0, nano: Int = 0,
 				offset: Int = 0)
 	{
 		self.init(year: year, month: month.index + 1,
@@ -119,7 +119,7 @@ public struct Time: Sendable {
 	}
 
 	public init(year: Int, month: Int, day: Int,
-	            hour: Int, minute: Int, second: Int, nano: Int,
+	            hour: Int = 0, minute: Int = 0, second: Int = 0, nano: Int = 0,
 				offset: Int = 0)
 	{
 		// Normalize month, overflowing into year.

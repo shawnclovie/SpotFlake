@@ -362,6 +362,10 @@ extension TimeDuration: AdditiveArithmetic {
 	public static func / <T: BinaryInteger>(lhs: Self, rhs: T) -> Self {
 		.init(lhs.nanoseconds / Int64(rhs))
 	}
+
+	public static func / (lhs: Self, rhs: Self) -> Double {
+		Double(lhs.nanoseconds) / Double(rhs.nanoseconds)
+	}
 }
 
 public extension TimeDuration {
