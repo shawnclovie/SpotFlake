@@ -43,6 +43,16 @@ final class TimeTests: XCTestCase {
 	}
 	
 	func testTime() {
+		XCTAssertEqual(Time.Month.april, Time.Month(rawValue: 4))
+		XCTAssertEqual(Time.Month.april, Time.Month(index: 3))
+		XCTAssertEqual(Time.Month.april, Time.Month(index: -21))
+		XCTAssertEqual(Time.Month.april, Time.Month(index: 15))
+		XCTAssertEqual(Time.Month.april, Time.Month(named: "April"))
+		XCTAssertEqual(Time.Month.april, Time.Month(shortName: "Apr"))
+		XCTAssertEqual(3, Time.Month.april.index)
+		XCTAssertEqual(4, Time.Month.april.advanced(1).index)
+		XCTAssertEqual(3, Time.Month.april.advanced(12).index)
+
 		let timeOver = Time(seconds: 3, nano: -2_123_456_789)
 		let timeResult = Time(seconds: 0, nano: 876_543_211)
 		XCTAssert(timeOver == timeResult)

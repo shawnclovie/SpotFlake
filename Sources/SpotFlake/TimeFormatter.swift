@@ -161,7 +161,7 @@ public struct TimeLayout {
 			case .month(let style):
 				switch style {
 				case .digital:
-					str += dateLeadingZero ? Self.format(date.month.rawValue, leadingZero: 2) : "\(date.month.rawValue)"
+					str += dateLeadingZero ? Self.format(Int(date.month.rawValue), leadingZero: 2) : "\(date.month.rawValue)"
 				case .name:
 					str += date.month.name
 				case .short:

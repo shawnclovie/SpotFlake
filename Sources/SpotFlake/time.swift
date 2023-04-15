@@ -113,7 +113,7 @@ public struct Time: Sendable {
 	            hour: Int, minute: Int, second: Int, nano: Int,
 				offset: Int = 0)
 	{
-		self.init(year: year, month: month.rawValue,
+		self.init(year: year, month: month.index + 1,
 		          day: day, hour: hour, minute: minute, second: second, nano: nano,
 		          offset: offset)
 	}
@@ -124,7 +124,7 @@ public struct Time: Sendable {
 	{
 		// Normalize month, overflowing into year.
 		let (year, monthIndex) = normalized(max(year, absoluteZeroYear), month - 1, base: 12)
-		let month = Month(rawValue: monthIndex + 1)!
+		let month = Month(index: monthIndex)
 
 		// Normalize nsec, sec, min, hour, overflowing into day.
 		var (day, hour, min, sec, nsec) = (day, hour, minute, second, nano)
@@ -137,7 +137,7 @@ public struct Time: Sendable {
 		var d = Self.daysSinceEpoch(year)
 
 		// Add in days before this month.
-		d += UInt64(daysBefore[month.rawValue - 1])
+		d += UInt64(daysBefore[month.index])
 		if Self.isLeapYear(year), month.rawValue >= Month.march.rawValue {
 			d += 1 // February 29
 		}
@@ -179,7 +179,7 @@ public struct Time: Sendable {
 		let dates = date
 		let clocks = clock
 		return .init(year: dates.year + years,
-		             month: dates.month.rawValue + months,
+		             month: dates.month.index + 1 + months,
 		             day: dates.day + days,
 		             hour: clocks.hour, minute: clocks.minute, second: clocks.second,
 		             nano: Int(nanoseconds),
@@ -339,7 +339,7 @@ extension Time {
 		}
 	}
 
-	public enum Month: Int, Equatable, CaseIterable {
+	public enum Month: UInt8, Equatable, CaseIterable {
 		case january = 1
 		case february
 		case march
@@ -352,7 +352,16 @@ extension Time {
 		case october
 		case november
 		case december
-		
+
+		/// Make `Month` with carousel `index`.
+		public init(index: Int) {
+			var index = index % 12
+			if index < 0 {
+				index += 12
+			}
+			self.init(rawValue: UInt8(index) + 1)!
+		}
+
 		public init?(shortName: String) {
 			guard let index = Self.shortNames.firstIndex(of: shortName) else {
 				return nil
@@ -366,13 +375,25 @@ extension Time {
 			}
 			self = Self.allCases[index]
 		}
+
+		public var index: Int {
+			Int(rawValue - 1)
+		}
 		
 		public var name: String {
-			Self.names[rawValue - 1]
+			Self.names[Int(rawValue) - 1]
 		}
 		
 		public var shortName: String {
-			Self.shortNames[rawValue - 1]
+			Self.shortNames[Int(rawValue) - 1]
+		}
+
+		/// Calculate month with advanced index. `1` means next month.
+		public func advanced(_ offset: Int) -> Self {
+			guard offset != 0 else {
+				return self
+			}
+			return .init(index: index + offset)
 		}
 
 		static let names = [
@@ -519,8 +540,7 @@ extension Time {
 			begin = Int(daysBefore[monthIndex])
 		}
 
-		monthIndex += 1 // because January is 1
-		Month(rawValue: monthIndex).map { comps.month = $0 }
+		comps.month = Month(index: monthIndex)
 		comps.day = comps.day - begin + 1
 		return comps
 	}
