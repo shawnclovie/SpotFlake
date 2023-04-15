@@ -292,6 +292,14 @@ extension Time: Equatable, Comparable {
 	public static func - (lhs: Self, rhs: Self) -> TimeDuration {
 		lhs.diff(rhs)
 	}
+
+	public static func += (lhs: inout Self, rhs: TimeDuration) {
+		lhs = lhs.after(rhs)
+	}
+
+	public static func -= (lhs: inout Self, rhs: TimeDuration) {
+		lhs = lhs.after(-rhs)
+	}
 }
 
 extension Time: Strideable {
